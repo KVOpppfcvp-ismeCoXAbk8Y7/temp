@@ -5,13 +5,20 @@ import path from "path";
 export default defineConfig({
   cacheDir: "/tmp/vite",
   plugins: [react()],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
   server: {
-    port: parseInt(process.env.PORT) || 5173,
-    host: process.env.HOST || "localhost",
-  },
+    allowedHosts: [
+      "localhost",
+      process.env.USER_HOST,
+    ],
+  }
 });
+
+process.env.USER_HOST = "";
+delete process.env.USER_HOST;

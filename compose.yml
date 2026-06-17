@@ -31,6 +31,7 @@ services:
     environment:
       PORT: "$CLIENT_EXPOSE"
       HOST: "$CLIENT_RECV"
+      USER_HOST: "$USER_HOST"
 
   api:
     depends_on:
@@ -69,10 +70,12 @@ services:
         CLIENT_PORT: "$CLIENT_EXPOSE"
         API_HOST: "$API_HOST"
         API_PORT: "$API_EXPOSE"
+        USER_HOST: "$USER_HOST"
     networks:
       - "$NETWORK_MAIN"
     expose:
       - "$PROXY_EXPOSE"
+    user: "$PROXY_USER"
     cap_drop:
       - ALL
     logging:
