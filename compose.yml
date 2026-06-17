@@ -1,0 +1,89 @@
+networks:
+  main:
+    name: "$NETWORK_MAIN"
+
+services:
+  client:
+    build:
+      context: "${CLIENT_CONTEXT}"
+      dockerfile: Dockerfile
+    networks:
+      - "$NETWORK_MAIN"
+    expose:
+      - "$CLIENT_EXPOSE"
+    user: "$CLIENT_USER"
+    cap_drop:
+      - ALL
+    volumes:
+      - "${CLIENT_CONTEXT}/src:${VOLUME_NODE_APP}/src"
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${CLIENT_EXPOSE}/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+    environment:
+      PORT: "$CLIENT_EXPOSE"
+      HOST: "$CLIENT_RECV"
+
+  api:
+    depends_on:
+      client:
+        condition: service_healthy
+    build:
+      context: "${API_CONTEXT}"
+      dockerfile: Dockerfile
+    networks:
+      - "$NETWORK_MAIN"
+    expose:
+      - "$API_EXPOSE"
+    user: "$API_USER"
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+
+  proxy:
+    depends_on:
+      client:
+        condition: service_healthy
+      api:
+        condition: service_started
+    ports:
+      - "${PROXY_MAP}:${PROXY_EXPOSE}"
+    build:
+      context: "${PROXY_CONTEXT}"
+      dockerfile: Dockerfile
+      args:
+        PORT: "$PROXY_EXPOSE"
+        CLIENT_HOST: "$CLIENT_HOST"
+        CLIENT_PORT: "$CLIENT_EXPOSE"
+        API_HOST: "$API_HOST"
+        API_PORT: "$API_EXPOSE"
+    networks:
+      - "$NETWORK_MAIN"
+    expose:
+      - "$PROXY_EXPOSE"
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:${PROXY_EXPOSE}/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped

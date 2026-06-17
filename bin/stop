@@ -1,0 +1,25 @@
+#!/usr/bin/bash
+
+set -eu
+
+WDIR="$(pwd)"
+ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+
+cleanup() {
+  local status=$?
+
+  pushd "$WDIR"
+  exit $status
+}
+
+main() {
+  trap cleanup EXIT
+
+  . "${ROOT}/lib/common.bash"
+
+  pushd "$ROOT"
+
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" stop
+}
+
+main "$@"

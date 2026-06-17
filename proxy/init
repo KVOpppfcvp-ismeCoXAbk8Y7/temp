@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -eu
+
+varNames="$( \
+  grep -o '\${[a-zA-Z_][a-zA-Z0-9_]*}' "$CONF_TEMPLATE" | \
+  sort -u | \
+  sed -rn ':a;N;$!ba;s/\$\{([a-zA-Z_][A-Za-z0-9_]*)\}/\1/gp' \
+)"
+
+sedScript=
+while IFS= read -r varName; do
+  varValue="$(printenv "$varName")"
+  varValue="$(printf '%s\n' "$varValue" | sed 's/[\\|\/&]/\\&/g')"
+  sedScript="${sedScript};s|\${${varName}}|${varValue}|g"
+done <<EOF
+${varNames}
+EOF
+
+sed "$sedScript" "$CONF_TEMPLATE" > /etc/nginx/nginx.conf
+
+PORT=
+CLIENT_HOST=
+CLIENT_PORT=
+API_HOST=
+API_PORT=
+
+CONF_TEMPLATE=
+sedScript=
+varValue=
+varNames=
+varName=

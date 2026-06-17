@@ -1,0 +1,15 @@
+**/*Dockerfile
+
+**/*.bak
+**/*.env
+**/*.example
+**/*.log
+**/*.old
+**/*.swp
+**/*.template
+**/*.tmp
+
+bin/
+lib/
+tmp/
+node_modules/

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -eu
+
+TSC=
+
+cleanup() {
+  local status=$?
+  if [ -z "$TSC" ]; then
+    return $status
+  fi
+
+  kill -TERM "$TSC" 2>/dev/null || true
+  wait "$TSC" 2>/dev/null || true
+  echo "Terminated tsc: ${TSC}"
+
+  return $status
+}
+
+main() {
+  trap "cleanup; exit" INT TERM EXIT
+
+  local host="$HOST"
+  local port="$PORT"
+
+  HOST=
+  PORT=
+
+  tsc --watch --noEmit --project tsconfig.json &
+  TSC=$!
+  echo "Started tsc: ${TSC}"
+
+  echo "Starting vite"
+  vite --host "$host" --port "$port"
+
+  return 0
+}
+
+main "$@"
